@@ -15,6 +15,7 @@ await db.exec(`
 `)
 await migration('20261125000000_initial.sql')
 await migration('20261125000001_operations.sql')
+await migration('20261126000000_audit_owner_read.sql')
 await db.exec(await readFile(new URL('../supabase/seed.sql', import.meta.url), 'utf8'))
 
 const count = async (table) => Number((await db.query(`select count(*)::integer as n from public.${table}`)).rows[0].n)
@@ -35,6 +36,7 @@ if (remaining !== 2 || !sale) throw new Error('stock and sale operations failed'
 await db.exec(`reset role; insert into auth.users(id,email) values('00000000-0000-4000-8000-000000000002','staff@example.com'); update public.profiles set active=true where email='staff@example.com'; set request.jwt.claim.sub = '00000000-0000-4000-8000-000000000002'; set role authenticated;`)
 const staffProducts = await count('products')
 if (staffProducts < 10) throw new Error('active staff cannot read inventory')
+if (await count('audit_log') !== 0) throw new Error('staff can read owner-only audit log')
 await db.query(`update public.products set retail_price=1 where id=1`)
 await db.exec(`reset role;`)
 const price = (await db.query(`select retail_price from public.products where id=1`)).rows[0].retail_price

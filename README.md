@@ -2,11 +2,11 @@
 
 AgriSTIM is a Vite/React app for **Vercel** with **Supabase PostgreSQL and Auth**. The browser uses Supabase Row Level Security for store data. Vercel Functions hold the service key for sensor ingestion and owner account management. No Docker service is needed for this version.
 
-The database is live in [Jefferson715176's Supabase project](https://supabase.com/dashboard/project/hjcjwkmehxvyrvsypznl). The two migrations and converted inventory seed have been applied. The initial owner account is `admin@gmail.com`; its password was supplied separately. A Vercel project still needs to be created in the client's account.
+The database is live in [Jefferson715176's Supabase project](https://supabase.com/dashboard/project/hjcjwkmehxvyrvsypznl). The migrations and converted inventory seed have been applied. The initial owner account is `admin@gmail.com`; its password was supplied separately. The production app is [agristim.vercel.app](https://agristim.vercel.app) in Ken's Vercel workspace.
 
 ## Client setup
 
-1. The Supabase setup is complete for the linked project. For a fresh project only, run [the schema migration](supabase/migrations/20261125000000_initial.sql), then [the operation functions](supabase/migrations/20261125000001_operations.sql), then [the converted inventory data](supabase/seed.sql). Run them in that order. The seed carries products, categories, storage units, batches, losses, the reference price list, alerts, and historical audit entries. Do not rerun the seed against the live project.
+1. The Supabase setup is complete for the linked project. For a fresh project only, run [the schema migration](supabase/migrations/20261125000000_initial.sql), then [the operation functions](supabase/migrations/20261125000001_operations.sql), then [the audit access migration](supabase/migrations/20261126000000_audit_owner_read.sql), then [the converted inventory data](supabase/seed.sql). Run them in that order. The seed carries products, categories, storage units, batches, losses, the reference price list, alerts, and historical audit entries. Do not rerun the seed against the live project.
 2. The initial owner was created in Supabase **Authentication → Users** and activated. For a fresh project only, create an owner account there, then run this SQL with its email:
 
    ```sql
@@ -17,7 +17,7 @@ The database is live in [Jefferson715176's Supabase project](https://supabase.co
    ```
 
    Confirm one row changed. Staff and additional owners can then be created from the app's Users page.
-3. Import this Git repository into the client's Vercel account. The project root is this directory; `vercel.json` selects Vite and `dist`. Add these environment variables in **Vercel → Project Settings → Environment Variables** for the deployment environments you use:
+3. The current Vercel project deploys from [Ken-n7/agristim](https://github.com/Ken-n7/agristim), a separate clone of this repository. Changes to this repository must be copied to that clone to reach production. `vercel.json` selects Vite and `dist`. The project has these environment variables in **Vercel → Project Settings → Environment Variables**:
 
    | Name | Value | Exposure |
    | --- | --- | --- |

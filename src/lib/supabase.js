@@ -35,6 +35,7 @@ export function csvDownload(name, headers, rows) {
   const anchor = document.createElement('a')
   anchor.href = url
   anchor.download = name
+  document.body.append(anchor)
   anchor.click()
-  URL.revokeObjectURL(url)
+  setTimeout(() => { anchor.remove(); URL.revokeObjectURL(url) }, 1000)
 }
