@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.vercel/
+# Local legacy backup; the Vercel/Supabase app uses src/, api/, and supabase/.
+/app/
+/database/
+/docker/
+/scripts/
+/Dockerfile
+/compose.yaml
+/.dockerignore

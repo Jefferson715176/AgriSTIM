@@ -1,0 +1,22 @@
+{
+  "name": "agristim",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "check": "node tests/db-smoke.mjs && node tests/api-smoke.mjs"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.86.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.6.0",
+    "@vitejs/plugin-react": "^5.1.1",
+    "vite": "^7.2.4"
+  }
+}

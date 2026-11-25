@@ -1,0 +1,9 @@
+app/
+database/
+docker/
+scripts/
+Dockerfile
+compose.yaml
+.dockerignore
+AgriSTIM_Project.zip.zip
+agristim.sql
