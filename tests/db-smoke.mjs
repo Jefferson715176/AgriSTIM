@@ -16,6 +16,7 @@ await db.exec(`
 await migration('20261125000000_initial.sql')
 await migration('20261125000001_operations.sql')
 await migration('20261126000000_audit_owner_read.sql')
+await migration('20261127000000_manila_dates_audit_trigger.sql')
 await db.exec(await readFile(new URL('../supabase/seed.sql', import.meta.url), 'utf8'))
 
 const count = async (table) => Number((await db.query(`select count(*)::integer as n from public.${table}`)).rows[0].n)
@@ -33,11 +34,18 @@ await db.query(`select public.stock_out($1,1,'damaged')`, [batch])
 await db.query(`select public.refresh_alerts()`)
 const remaining = (await db.query(`select qty_remaining from public.batches where id=$1`, [batch])).rows[0].qty_remaining
 if (remaining !== 2 || !sale) throw new Error('stock and sale operations failed')
+await db.query(`update public.products set reorder_level=reorder_level where id=1`)
+if (!(await db.query(`select 1 from public.audit_log where action like 'updated products %' and user_id='00000000-0000-4000-8000-000000000001'`)).rows.length) throw new Error('product changes are not audited')
+const defs = (await db.query(`select string_agg(pg_get_functiondef(p.oid),'') as d from pg_proc p where proname in ('record_sale','refresh_alerts')`)).rows[0].d
+if (defs.includes('current_date') || !defs.includes('private.today()')) throw new Error('expiry checks do not use Manila date')
 await db.exec(`reset role; insert into auth.users(id,email) values('00000000-0000-4000-8000-000000000002','staff@example.com'); update public.profiles set active=true where email='staff@example.com'; set request.jwt.claim.sub = '00000000-0000-4000-8000-000000000002'; set role authenticated;`)
 const staffProducts = await count('products')
 if (staffProducts < 10) throw new Error('active staff cannot read inventory')
 if (await count('audit_log') !== 0) throw new Error('staff can read owner-only audit log')
 await db.query(`update public.products set retail_price=1 where id=1`)
+let forged = false
+try { await db.query(`insert into public.audit_log(user_id,action) values('00000000-0000-4000-8000-000000000002','fake')`); forged = true } catch {}
+if (forged) throw new Error('clients can forge audit entries')
 await db.exec(`reset role;`)
 const price = (await db.query(`select retail_price from public.products where id=1`)).rows[0].retail_price
 if (Number(price) === 1) throw new Error('staff can alter owner-only products')

@@ -11,11 +11,6 @@ export async function unwrap(query) {
   return data
 }
 
-export async function audit(action, userId) {
-  if (!userId) return
-  await unwrap(supabase.from('audit_log').insert({ user_id: userId, action: action.slice(0, 255) }))
-}
-
 export function money(value) {
   return new Intl.NumberFormat('en-PH', { style: 'currency', currency: 'PHP' }).format(Number(value) || 0)
 }

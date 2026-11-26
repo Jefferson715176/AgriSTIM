@@ -24,7 +24,7 @@ export default function Alerts({ notify }) {
   }
   return <>
     <div className="toolbar"><p className="intro">Acknowledge issues and record what was done to resolve them.</p><div className="toolbar-actions">{['active','resolved','all'].map(value=><button key={value} className={`button ${filter===value?'selected':''}`} onClick={()=>setFilter(value)}>{value[0].toUpperCase()+value.slice(1)}</button>)}</div></div>
-    <Card title={`${rows.length} ${filter} alerts`}><Notice error={alerts.error} loading={alerts.loading} /><Table heads={['Date','Type','Message','Status','Action']} empty={filter==='resolved'?'No resolved alerts yet.':'No active alerts. All clear.'} rows={rows.map(a=>[
+    <Card title={`${rows.length} ${filter==='all'?'':`${filter} `}alerts`}><Notice error={alerts.error} loading={alerts.loading} /><Table heads={['Date','Type','Message','Status','Action']} empty={filter==='resolved'?'No resolved alerts yet.':filter==='all'?'No alerts recorded yet.':'No active alerts. All clear.'} rows={rows.map(a=>[
       date(a.created_at),
       <Badge tone={a.type==='temp'?'danger':'warn'}>{a.type.replace('_',' ')}</Badge>,
       a.message,

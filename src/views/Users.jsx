@@ -22,7 +22,7 @@ export default function Users({ profile, session, notify }) {
   async function request(method,body){
     const { data:{session:current} }=await supabase.auth.getSession()
     const response=await fetch('/api/users',{method,headers:{'Content-Type':'application/json',Authorization:`Bearer ${current?.access_token||''}`},body:body?JSON.stringify(body):undefined})
-    const payload=await response.json()
+    const payload=await response.json().catch(()=>{throw new Error('Account service is unavailable. Try again later.')})
     if(!response.ok)throw new Error(payload.error||'Request failed')
     return payload
   }

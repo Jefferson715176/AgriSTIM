@@ -45,3 +45,21 @@
   .sale-footer,.sale-footer>div{flex-wrap:wrap}
 }
 .alert-action{flex-wrap:wrap}.alert-action .field-error{flex-basis:100%}
+/* Keep independent cards compact and fill loading time without layout jumps. */
+.two-col{align-items:start}
+.quick-links{grid-template-columns:repeat(4,minmax(0,1fr))}
+.content{min-height:calc(100vh - 105px)}
+.loading-state{padding:10px 0 4px;color:#6b8b76;font-size:12px}
+.loading-state span{display:block;margin-bottom:16px}
+.skeleton-row,.skeleton-line{height:14px;background:linear-gradient(90deg,#eaf0e8,#f5f8f3,#eaf0e8);background-size:200% 100%;border-radius:6px;animation:skeleton-shift 1.6s linear infinite}
+.skeleton-row{height:30px;margin:10px 0}.skeleton-row:nth-child(even){width:86%}
+.skeleton-line{width:75%;margin:8px 0 18px}.skeleton-line.short{width:42%}
+.skeleton-stat{min-height:138px}.skeleton-card{min-height:350px}
+.card:has(.loading-state) .empty{display:none}
+@keyframes skeleton-shift{to{background-position-x:-200%}}
+@media (prefers-reduced-motion:reduce){.skeleton-row,.skeleton-line{animation:none}}
+@media (max-width:800px){.quick-links{grid-template-columns:repeat(2,minmax(0,1fr))}.sidebar nav{scrollbar-width:thin;scrollbar-color:#7eaa8d #193b2b}.sidebar nav::-webkit-scrollbar{height:4px}.sidebar nav::-webkit-scrollbar-thumb{background:#7eaa8d;border-radius:4px}}
+@media (max-width:520px){.skeleton-card{min-height:240px}}
+.pager{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid #e6ede4;padding-top:14px;margin-top:16px;color:#708b78;font-size:12px}.pager>div{display:flex;gap:6px}
+.card:has(.notice.error) .empty{display:none}
+.page-loading{margin:0}.page-loading .skeleton-card{margin-bottom:0}

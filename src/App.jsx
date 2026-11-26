@@ -1,5 +1,6 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react'
 import { configured, supabase, unwrap } from './lib/supabase'
+import { clearTableCache } from './lib/tableCache'
 import Overview from './views/Overview'
 import Products from './views/Products'
 import Stock from './views/Stock'
@@ -43,12 +44,17 @@ export default function App() {
   const [message, setMessage] = useState(null)
   const [connection, setConnection] = useState('checking')
   const toastTimer = useRef(null)
+  const lastUserId = useRef(null)
   useEffect(() => {
     if (!supabase) { setAuthReady(true); return }
     supabase.auth.getSession().then(({ data }) => setSession(data.session)).finally(() => setAuthReady(true))
     const { data: auth } = supabase.auth.onAuthStateChange((_event, next) => setSession(next))
     return () => auth.subscription.unsubscribe()
   }, [])
+  useEffect(() => {
+    const userId = session?.user?.id || null
+    if (lastUserId.current !== userId) { clearTableCache(); lastUserId.current = userId }
+  }, [session?.user?.id])
   useEffect(() => {
     if (!authReady) return
     if (!session) { setProfile(null); setReady(true); return }
@@ -60,10 +66,18 @@ export default function App() {
     return () => { cancelled = true }
   }, [authReady, session?.user?.id])
   useEffect(() => {
-    const change = () => setView(location.hash.slice(1) || 'overview')
+    const change = () => { window.scrollTo(0, 0); setView(location.hash.slice(1) || 'overview') }
     addEventListener('hashchange', change)
     return () => removeEventListener('hashchange', change)
   }, [])
+  useEffect(() => {
+    if (window.innerWidth > 800) return
+    const nav = document.querySelector('.sidebar nav')
+    const active = nav?.querySelector('a.active')
+    if (!nav || !active) return
+    const navBox = nav.getBoundingClientRect(), activeBox = active.getBoundingClientRect()
+    nav.scrollLeft += activeBox.left - navBox.left - (navBox.width - activeBox.width) / 2
+  }, [view])
   useEffect(() => {
     if (!session?.user?.id) return
     let active = true
@@ -92,5 +106,5 @@ export default function App() {
   if (!profile?.active || profile.error) return <main className="setup-shell"><div className="setup-card"><h1>Account needs access</h1><p>{profile?.error || 'This account is inactive.'} Ask the Supabase project owner to activate your profile.</p><button className="button" onClick={() => supabase.auth.signOut()}>Sign out</button></div></main>
   const current = views[view] ? view : 'overview'
   const Page = views[current]
-  return <div className="app-shell"><aside className="sidebar"><a className="brand" href="#overview"><span className="brand-mark">🌾</span><span>AgriSTIM<small>RJM Agrivet</small></span></a><div className="nav-caption">WORKSPACE</div><nav>{navigation.filter(([key]) => !['users', 'audit', 'reports'].includes(key) || profile.role === 'owner').map(([key, label, icon]) => <a key={key} href={`#${key}`} className={current === key ? 'active' : ''}><span className="nav-icon">{icon}</span>{label}</a>)}</nav><div className="sidebar-bottom"><div className="avatar">{(profile.full_name || profile.email)[0]?.toUpperCase()}</div><div className="account"><strong>{profile.full_name || profile.email}</strong><span>{profile.role === 'owner' ? 'Store owner' : 'Staff'}</span></div><button className="signout" title="Sign out" onClick={() => supabase.auth.signOut()}>↗</button></div></aside><main className="main"><header className="topbar"><div><div className="eyebrow">RJM AGRIVET / {current.toUpperCase()}</div><h1>{navigation.find(([key]) => key === current)?.[1]}</h1></div><div className={`topbar-side ${connection}`} role="status"><span className="online-dot" /> {connection === 'online' ? 'Connected to server' : connection === 'offline' ? 'Connection unavailable' : 'Checking connection'}</div></header><div className="toast-region" aria-live="polite" aria-atomic="true">{message && <div className={`toast ${message.bad ? 'error' : ''}`}>{message.text}</div>}</div><div className="content"><Suspense fallback={<div className="notice" role="status">Loading…</div>}><Page profile={profile} session={session} notify={notify} /></Suspense></div></main></div>
+  return <div className="app-shell"><aside className="sidebar"><a className="brand" href="#overview"><span className="brand-mark">🌾</span><span>AgriSTIM<small>RJM Agrivet</small></span></a><div className="nav-caption">WORKSPACE</div><nav>{navigation.filter(([key]) => !['users', 'audit', 'reports'].includes(key) || profile.role === 'owner').map(([key, label, icon]) => <a key={key} href={`#${key}`} className={current === key ? 'active' : ''}><span className="nav-icon">{icon}</span>{label}</a>)}</nav><div className="sidebar-bottom"><div className="avatar">{(profile.full_name || profile.email)[0]?.toUpperCase()}</div><div className="account"><strong>{profile.full_name || profile.email}</strong><span>{profile.role === 'owner' ? 'Store owner' : 'Staff'}</span></div><button className="signout" title="Sign out" onClick={() => supabase.auth.signOut()}>↗</button></div></aside><main className="main"><header className="topbar"><div><div className="eyebrow">RJM AGRIVET / {current.toUpperCase()}</div><h1>{navigation.find(([key]) => key === current)?.[1]}</h1></div><div className={`topbar-side ${connection}`} role="status"><span className="online-dot" /> {connection === 'online' ? 'Connected to server' : connection === 'offline' ? 'Connection unavailable' : 'Checking connection'}</div></header><div className="toast-region" aria-live="polite" aria-atomic="true">{message && <div className={`toast ${message.bad ? 'error' : ''}`}>{message.text}</div>}</div><div className="content"><Suspense fallback={<div className="two-col page-loading" role="status" aria-label="Loading page"><div className="card skeleton-card"><div className="skeleton-line" /><div className="skeleton-row" /><div className="skeleton-row" /></div><div className="card skeleton-card"><div className="skeleton-line" /><div className="skeleton-row" /></div></div>}><Page profile={profile} session={session} notify={notify} /></Suspense></div></main></div>
 }
