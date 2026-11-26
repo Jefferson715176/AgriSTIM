@@ -5,3 +5,24 @@
 
 .chart-frame{height:300px;max-width:100%;margin:8px 0 22px;position:relative}
 .chart-frame canvas{max-width:100%}
+@media (max-width: 800px){
+  .app-shell{display:block}
+  .sidebar{position:relative;width:100%;min-width:0;height:auto;padding:16px;gap:12px}
+  .sidebar .brand{padding:0}
+  .nav-caption{display:none}
+  .sidebar nav{display:flex;flex-direction:row;overflow-x:auto;padding-bottom:4px}
+  .sidebar nav a{white-space:nowrap;padding:8px 10px}
+  .sidebar-bottom{margin-top:0;padding-top:12px}
+  .topbar{padding:20px;gap:12px}
+  .content{padding:20px}
+  .two-col,.two-col.wide-left{grid-template-columns:1fr}
+  .stat-grid,.sensor-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .toolbar,.report-filters{flex-wrap:wrap}
+}
+@media (max-width: 520px){
+  .topbar{align-items:flex-start;flex-direction:column}
+  .stat-grid,.sensor-grid{grid-template-columns:1fr}
+  .card{padding:16px}
+  .card-head{align-items:flex-start;flex-wrap:wrap}
+  .chart-frame{height:260px}
+}
