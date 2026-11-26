@@ -24,6 +24,10 @@ export function date(value) {
   return value ? new Date(value).toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
 }
 
+export function philippineDay(value) {
+  return new Date(value).toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' })
+}
+
 export function csvDownload(name, headers, rows) {
   const escape = (value) => {
     let text = String(value ?? '')

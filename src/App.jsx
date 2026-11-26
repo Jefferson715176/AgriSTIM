@@ -1,15 +1,16 @@
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import { configured, supabase, unwrap } from './lib/supabase'
 import Overview from './views/Overview'
 import Products from './views/Products'
 import Stock from './views/Stock'
 import Sales from './views/Sales'
 import Orders from './views/Orders'
-import Temperature from './views/Temperature'
 import Alerts from './views/Alerts'
-import Reports from './views/Reports'
 import Users from './views/Users'
 import Audit from './views/Audit'
+
+const Temperature = React.lazy(() => import('./views/Temperature'))
+const Reports = React.lazy(() => import('./views/Reports'))
 
 const navigation = [
   ['overview', 'Overview', '◫'], ['products', 'Products', '▣'], ['stock', 'Stock', '◈'],
@@ -68,5 +69,5 @@ export default function App() {
   if (!profile?.active || profile.error) return <main className="setup-shell"><div className="setup-card"><h1>Account needs access</h1><p>{profile?.error || 'This account is inactive.'} Ask the Supabase project owner to activate your profile.</p><button className="button" onClick={() => supabase.auth.signOut()}>Sign out</button></div></main>
   const current = views[view] ? view : 'overview'
   const Page = views[current]
-  return <div className="app-shell"><aside className="sidebar"><a className="brand" href="#overview"><span className="brand-mark">🌾</span><span>AgriSTIM<small>RJM Agrivet</small></span></a><div className="nav-caption">WORKSPACE</div><nav>{navigation.filter(([key]) => !['users', 'audit', 'reports'].includes(key) || profile.role === 'owner').map(([key, label, icon]) => <a key={key} href={`#${key}`} className={current === key ? 'active' : ''}><span className="nav-icon">{icon}</span>{label}</a>)}</nav><div className="sidebar-bottom"><div className="avatar">{(profile.full_name || profile.email)[0]?.toUpperCase()}</div><div className="account"><strong>{profile.full_name || profile.email}</strong><span>{profile.role === 'owner' ? 'Store owner' : 'Staff'}</span></div><button className="signout" title="Sign out" onClick={() => supabase.auth.signOut()}>↗</button></div></aside><main className="main"><header className="topbar"><div><div className="eyebrow">RJM AGRIVET / {current.toUpperCase()}</div><h1>{navigation.find(([key]) => key === current)?.[1]}</h1></div><div className="topbar-side"><span className="online-dot" /> Connected to Supabase</div></header>{message && <div className={`toast ${message.bad ? 'error' : ''}`}>{message.text}</div>}<div className="content"><Page profile={profile} session={session} notify={notify} /></div></main></div>
+  return <div className="app-shell"><aside className="sidebar"><a className="brand" href="#overview"><span className="brand-mark">🌾</span><span>AgriSTIM<small>RJM Agrivet</small></span></a><div className="nav-caption">WORKSPACE</div><nav>{navigation.filter(([key]) => !['users', 'audit', 'reports'].includes(key) || profile.role === 'owner').map(([key, label, icon]) => <a key={key} href={`#${key}`} className={current === key ? 'active' : ''}><span className="nav-icon">{icon}</span>{label}</a>)}</nav><div className="sidebar-bottom"><div className="avatar">{(profile.full_name || profile.email)[0]?.toUpperCase()}</div><div className="account"><strong>{profile.full_name || profile.email}</strong><span>{profile.role === 'owner' ? 'Store owner' : 'Staff'}</span></div><button className="signout" title="Sign out" onClick={() => supabase.auth.signOut()}>↗</button></div></aside><main className="main"><header className="topbar"><div><div className="eyebrow">RJM AGRIVET / {current.toUpperCase()}</div><h1>{navigation.find(([key]) => key === current)?.[1]}</h1></div><div className="topbar-side"><span className="online-dot" /> Connected to server</div></header>{message && <div className={`toast ${message.bad ? 'error' : ''}`}>{message.text}</div>}<div className="content"><Suspense fallback={<div className="notice">Loading…</div>}><Page profile={profile} session={session} notify={notify} /></Suspense></div></main></div>
 }
