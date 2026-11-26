@@ -7,6 +7,7 @@ export function Card({ title, action, children, className = '' }) {
 export function Empty({ children = 'Nothing to show yet.' }) { return <div className="empty">{children}</div> }
 export function Field({ label, children }) { return <label className="field"><span>{label}</span>{children}</label> }
 export function Badge({ children, tone = 'neutral' }) { return <span className={`badge ${tone}`}>{children}</span> }
+export function FormError({ message }) { return message ? <div className="notice error" role="alert">{message}</div> : null }
 export function Table({ heads, rows, empty = 'Nothing to show yet.' }) {
   if (!rows.length) return <Empty>{empty}</Empty>
   return <div className="table-wrap"><table><thead><tr>{heads.map((head) => <th key={head}>{head}</th>)}</tr></thead><tbody>{rows.map((row, index) => <tr key={index}>{row.map((cell, i) => <td key={i}>{cell}</td>)}</tr>)}</tbody></table></div>
@@ -30,7 +31,7 @@ export function useTable(table, query = '*', options = {}) {
   return { rows, reload, loading, error }
 }
 export function Notice({ error, loading }) {
-  if (error) return <div className="notice error">{error}</div>
-  if (loading) return <div className="notice">Loading…</div>
+  if (error) return <div className="notice error" role="alert">{error}</div>
+  if (loading) return <div className="notice" role="status">Loading…</div>
   return null
 }
