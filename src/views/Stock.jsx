@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Badge, Card, Field, FormError, Notice, Table, useTable } from '../components'
-import { audit, date, money, supabase, unwrap } from '../lib/supabase'
+import { date, money, supabase, unwrap } from '../lib/supabase'
 
 export default function Stock({ session, notify }) {
   const products = useTable('products','id,name,unit,archived,cost_price',{order:'name',ascending:true})
