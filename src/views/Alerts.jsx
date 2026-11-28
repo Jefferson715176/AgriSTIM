@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { Badge, Card, Notice, Table, useTable } from '../components'
+import { Badge, Card, Notice, Table, useTable, useConfirm } from '../components'
 import { date, supabase, unwrap } from '../lib/supabase'
 
 export default function Alerts({ notify }) {
+  const [ask, confirmDialog] = useConfirm()
   const alerts=useTable('alerts','*',{order:'created_at',limit:200})
   const [filter,setFilter]=useState('active')
   const [remarks,setRemarks]=useState({})
@@ -13,6 +14,9 @@ export default function Alerts({ notify }) {
     if(pending[alert.id])return
     const note=(remarks[alert.id]??alert.remarks??'').trim()
     if(status==='resolved'&&!note){setErrors(current=>({...current,[alert.id]:'Write the action taken before resolving.'}));return}
+    if(!await ask(status==='resolved'
+      ?{title:'Resolve alert?',message:`"${alert.message}" will be closed with the note: ${note}. Resolved alerts can't be reopened.`,action:'Resolve'}
+      :{title:'Acknowledge alert?',message:`"${alert.message}" will be marked as seen. It stays active until resolved.`,action:'Acknowledge'}))return
     setPending(current=>({...current,[alert.id]:true}))
     setErrors(current=>({...current,[alert.id]:''}))
     try{
@@ -22,7 +26,7 @@ export default function Alerts({ notify }) {
     }catch(issue){setErrors(current=>({...current,[alert.id]:issue.message}))}
     finally{setPending(current=>({...current,[alert.id]:false}))}
   }
-  return <>
+  return <>{confirmDialog}
     <div className="toolbar"><p className="intro">Acknowledge issues and record what was done to resolve them.</p><div className="toolbar-actions">{['active','resolved','all'].map(value=><button key={value} className={`button ${filter===value?'selected':''}`} onClick={()=>setFilter(value)}>{value[0].toUpperCase()+value.slice(1)}</button>)}</div></div>
     <Card title={`${rows.length} ${filter==='all'?'':`${filter} `}alerts`}><Notice error={alerts.error} loading={alerts.loading} /><Table heads={['Date','Type','Message','Status','Action']} empty={filter==='resolved'?'No resolved alerts yet.':filter==='all'?'No alerts recorded yet.':'No active alerts. All clear.'} rows={rows.map(a=>[
       date(a.created_at),
