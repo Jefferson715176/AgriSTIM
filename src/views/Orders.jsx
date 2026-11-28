@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Card, Empty, Field, FormError, Notice, Table, useTable } from '../components'
+import { Card, Empty, Field, FormError, Notice, Table, useTable, useConfirm } from '../components'
 import { date, money, supabase, unwrap } from '../lib/supabase'
 
 const statuses=['Pending','Confirmed','Preparing','Ready for Pickup','Completed','Cancelled']
@@ -7,6 +7,7 @@ const payments=['Unpaid','Partially Paid','Paid']
 const blank={customer_name:'',contact_number:'',pickup_date:'',pickup_time:'',total_amount:'',notes:''}
 
 export default function Orders() {
+  const [ask, confirmDialog] = useConfirm()
   const orders=useTable('bulk_orders','*',{order:'created_at',limit:100})
   const [form,setForm]=useState(blank)
   const [busy,setBusy]=useState(false)
@@ -32,6 +33,10 @@ export default function Orders() {
   async function update(id,key,value) {
     const slot=`${id}:${key}`
     if (pending[slot]) return
+    if (key==='order_status' && (value==='Cancelled' || value==='Completed')) {
+      const order=orders.rows.find(o=>o.order_id===id)
+      if (!await ask({title:`Mark order ${value.toLowerCase()}?`,message:`${order?.order_number||'This order'} for ${order?.customer_name||'this customer'} will be marked ${value}.`,action:`Mark ${value.toLowerCase()}`,danger:value==='Cancelled'})) return
+    }
     setPending(current=>({...current,[slot]:true}))
     setDraft(current=>({...current,[slot]:value}))
     setFeedback(current=>({...current,[slot]:{kind:'pending',text:'Saving…'}}))
@@ -54,7 +59,7 @@ export default function Orders() {
       {state && <small className={state.kind==='error'?'inline-feedback error':'inline-feedback'} role="status">{state.text}</small>}
     </div>
   }
-  return <>
+  return <>{confirmDialog}
     <p className="intro">Track pickup orders and payments alongside regular sales.</p>
     <div className="two-col wide-left">
       <Card title="Bulk orders">

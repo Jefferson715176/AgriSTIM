@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
-import { Card, Empty, FormError, Notice, Table, useTable } from '../components'
+import { Card, Empty, FormError, Notice, Table, useTable, useConfirm } from '../components'
 import { date, money, philippineDay, supabase, unwrap } from '../lib/supabase'
 
 export default function Sales({ notify }) {
+  const [ask, confirmDialog] = useConfirm()
   const products = useTable('products','id,name,unit,retail_price,bulk_price,archived',{order:'name',ascending:true})
   const batches = useTable('batches','product_id,qty_remaining,expiry')
   const sales = useTable('sales','id,type,customer,total,created_at,sale_items(qty,unit_price,products(name))',{order:'created_at',limit:60})
@@ -45,6 +46,7 @@ export default function Sales({ notify }) {
         }
       })
       if(Object.keys(errors).length){setLineErrors(errors);throw new Error('Review the highlighted sale lines.')}
+      if(!await ask({title:'Record sale?',message:`${lines.reduce((sum,line)=>sum+line.qty,0)} units · about ${money(estimate)}${customer.trim()?` for ${customer.trim()}`:''}. Stock is deducted right away and the sale can't be edited afterwards.`,action:'Record sale'})) return
       const id=await unwrap(supabase.rpc('record_sale',{p_type:type,p_customer:customer,p_items:lines}))
       let total=null
       try { const sale=await unwrap(supabase.from('sales').select('total').eq('id',id).single()); total=Number(sale.total) } catch { /* The sale was still recorded. */ }
@@ -55,7 +57,7 @@ export default function Sales({ notify }) {
     } catch (issue) { setFormError(issue.message) }
     finally { setBusy(false) }
   }
-  return <>
+  return <>{confirmDialog}
     <p className="intro">Record a retail or bulk sale. Stock is deducted in one database transaction.</p>
     <Card title="New sale">
       {savedSale && <div className="confirmation" role="status"><strong>Sale #{savedSale.id} recorded</strong><span>{savedSale.units} units{savedSale.total !== null ? ` · ${money(savedSale.total)}` : ''}. Stock has been updated.</span><button type="button" className="text-link" onClick={()=>setSavedSale(null)}>Dismiss</button></div>}

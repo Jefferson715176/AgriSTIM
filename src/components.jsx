@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { supabase, unwrap } from './lib/supabase'
 import { cacheGeneration, tableCache } from './lib/tableCache'
 
@@ -47,4 +47,18 @@ export function Notice({ error, loading }) {
   if (error) return <div className="notice error" role="alert">{error}</div>
   if (loading) return <div className="loading-state" role="status" aria-label="Loading data"><span>Loading data…</span><div className="skeleton-row" /><div className="skeleton-row" /><div className="skeleton-row" /><div className="skeleton-row" /></div>
   return null
+}
+
+// Shared confirmation for actions that can't be undone: const [ask, confirmDialog] = useConfirm(); render {confirmDialog}; if (!await ask({...})) return
+export function useConfirm() {
+  const [request, setRequest] = useState(null)
+  const ref = useRef(null)
+  useEffect(() => { if (request && !ref.current?.open) ref.current?.showModal() }, [request])
+  const ask = options => new Promise(resolve => setRequest({ ...options, resolve }))
+  const close = ok => { request.resolve(ok); setRequest(null) }
+  const dialog = request && <dialog ref={ref} className="modal confirm-dialog" aria-labelledby="confirm-title" onCancel={e => { e.preventDefault(); close(false) }} onClick={e => { if (e.target === e.currentTarget) close(false) }}>
+    <div><h2 id="confirm-title">{request.title}</h2><p>{request.message}</p>
+      <div className="form-actions"><button type="button" className="button" autoFocus onClick={() => close(false)}>Cancel</button><button type="button" className={`button ${request.danger ? 'danger' : 'primary'}`} onClick={() => close(true)}>{request.action}</button></div></div>
+  </dialog>
+  return [ask, dialog]
 }

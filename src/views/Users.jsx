@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Badge, Card, Empty, Field, FormError, Notice, Table } from '../components'
+import { Badge, Card, Empty, Field, FormError, Notice, Table, useConfirm } from '../components'
 import { supabase } from '../lib/supabase'
 
 const blank={email:'',full_name:'',password:'',role:'staff'}
 
 export default function Users({ profile, session, notify }) {
+  const [ask, confirmDialog] = useConfirm()
   const [users,setUsers]=useState([])
   const [error,setError]=useState('')
   const [loading,setLoading]=useState(true)
@@ -55,6 +56,8 @@ export default function Users({ profile, session, notify }) {
   }
   async function change(user,patch){
     if(pendingUser)return
+    const message=patch.role?`${user.email} will become ${patch.role==='owner'?'an owner, with full access to users, reports and the audit log':'staff, and lose access to users, reports and the audit log'}.`:patch.active===false?`${user.email} will lose access and can't log in until the account is reactivated.`:null
+    if(message&&!await ask({title:patch.role?'Change role?':'Deactivate account?',message,action:patch.role?'Change role':'Deactivate',danger:patch.active===false}))return
     setPendingUser(user.id)
     try{await request('PATCH',{id:user.id,...patch});await reload();notify(`${user.email} updated.`)}
     catch(issue){notify(issue.message,true)}
@@ -85,7 +88,7 @@ export default function Users({ profile, session, notify }) {
     finally{setDialogBusy(false)}
   }
   if(profile.role!=='owner')return null
-  return <>
+  return <>{confirmDialog}
     <div className="toolbar"><p className="intro">Create staff and owner accounts. Account changes take effect immediately.</p><button className="button" onClick={()=>openDialog('mine')}>Change my password</button></div>
     <div className="two-col wide-left">
       <Card title="Accounts">
