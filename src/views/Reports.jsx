@@ -4,7 +4,7 @@ import { csvDownload, money, philippineDay } from '../lib/supabase'
 import { SalesTrend, TopProducts } from '../components/Charts'
 
 export default function Reports() {
-  const sales=useTable('sales','id,total,created_at',{order:'created_at',limit:1000})
+  const sales=useTable('sales','id,total,created_at,voided_at',{order:'created_at',limit:1000})
   const items=useTable('sale_items','sale_id,qty,unit_price,unit_cost,product_id',{order:'id',limit:1000})
   const products=useTable('products','id,name,category,cost_price,retail_price,archived',{order:'name',ascending:true})
   const batches=useTable('batches','product_id,qty_remaining,expiry',{order:'id',limit:1000})
@@ -13,10 +13,11 @@ export default function Reports() {
   const [from,setFrom]=useState(() => `${philippineDay(Date.now()).slice(0,7)}-01`)
   const [to,setTo]=useState(() => philippineDay(Date.now()))
   const product=id=>products.rows.find(p=>p.id===id)
+  const liveSales=sales.rows.filter(s=>!s.voided_at)
   let headers=[],rows=[],chart=null
   if(type==='sales'){
     headers=['Date','Sales','Revenue','Cost','Profit'];const grouped={}
-    sales.rows.filter(s=>s.created_at&&philippineDay(s.created_at)>=from&&philippineDay(s.created_at)<=to).forEach(s=>{const day=philippineDay(s.created_at);grouped[day]||={count:0,total:0,cost:0};grouped[day].count++;grouped[day].total+=Number(s.total);grouped[day].cost+=items.rows.filter(i=>i.sale_id===s.id).reduce((sum,i)=>sum+Number(i.qty)*Number(i.unit_cost),0)})
+    liveSales.filter(s=>s.created_at&&philippineDay(s.created_at)>=from&&philippineDay(s.created_at)<=to).forEach(s=>{const day=philippineDay(s.created_at);grouped[day]||={count:0,total:0,cost:0};grouped[day].count++;grouped[day].total+=Number(s.total);grouped[day].cost+=items.rows.filter(i=>i.sale_id===s.id).reduce((sum,i)=>sum+Number(i.qty)*Number(i.unit_cost),0)})
     const daily=Object.entries(grouped).sort()
     rows=daily.map(([day,v])=>[day,v.count,money(v.total),money(v.cost),money(v.total-v.cost)])
     if(daily.length) chart=<SalesTrend labels={daily.map(([day])=>day)} revenue={daily.map(([,v])=>v.total)} profit={daily.map(([,v])=>v.total-v.cost)} />
@@ -31,7 +32,7 @@ export default function Reports() {
     rows=batches.rows.filter(b=>b.qty_remaining>0&&b.expiry).sort((a,b)=>a.expiry.localeCompare(b.expiry)).map(b=>[product(b.product_id)?.name||'Unknown',b.qty_remaining,b.expiry])
   } else {
     headers=['Product','Units sold','Revenue','Profit'];const grouped={}
-    const dates=Object.fromEntries(sales.rows.map(s=>[s.id,s.created_at&&philippineDay(s.created_at)]))
+    const dates=Object.fromEntries(liveSales.map(s=>[s.id,s.created_at&&philippineDay(s.created_at)]))
     items.rows.filter(item=>dates[item.sale_id]>=from&&dates[item.sale_id]<=to).forEach(item=>{const id=item.product_id;grouped[id]||={qty:0,revenue:0,profit:0};grouped[id].qty+=Number(item.qty);grouped[id].revenue+=Number(item.qty)*Number(item.unit_price);grouped[id].profit+=Number(item.qty)*(Number(item.unit_price)-Number(item.unit_cost))})
     const ranked=Object.entries(grouped).sort((a,b)=>b[1].qty-a[1].qty)
     rows=ranked.map(([id,v])=>[product(Number(id))?.name||'Unknown',v.qty,money(v.revenue),money(v.profit)])

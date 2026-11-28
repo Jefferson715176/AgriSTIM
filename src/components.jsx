@@ -54,11 +54,14 @@ export function useConfirm() {
   const [request, setRequest] = useState(null)
   const ref = useRef(null)
   useEffect(() => { if (request && !ref.current?.open) ref.current?.showModal() }, [request])
-  const ask = options => new Promise(resolve => setRequest({ ...options, resolve }))
-  const close = ok => { request.resolve(ok); setRequest(null) }
+  const [text, setText] = useState('')
+  const ask = options => { setText(''); return new Promise(resolve => setRequest({ ...options, resolve })) }
+  // With `input`, resolves to the trimmed text (or false on cancel) instead of true/false.
+  const close = ok => { request.resolve(ok && request.input ? text.trim() : ok); setRequest(null) }
   const dialog = request && <dialog ref={ref} className="modal confirm-dialog" aria-labelledby="confirm-title" onCancel={e => { e.preventDefault(); close(false) }} onClick={e => { if (e.target === e.currentTarget) close(false) }}>
     <div><h2 id="confirm-title">{request.title}</h2><p>{request.message}</p>
-      <div className="form-actions"><button type="button" className="button" autoFocus onClick={() => close(false)}>Cancel</button><button type="button" className={`button ${request.danger ? 'danger' : 'primary'}`} onClick={() => close(true)}>{request.action}</button></div></div>
+      {request.input && <label className="field"><span>{request.input}</span><input autoFocus required maxLength="255" value={text} onChange={e => setText(e.target.value)} /></label>}
+      <div className="form-actions"><button type="button" className="button" autoFocus={!request.input} onClick={() => close(false)}>Cancel</button><button type="button" className={`button ${request.danger ? 'danger' : 'primary'}`} disabled={request.input && !text.trim()} onClick={() => close(true)}>{request.action}</button></div></div>
   </dialog>
   return [ask, dialog]
 }

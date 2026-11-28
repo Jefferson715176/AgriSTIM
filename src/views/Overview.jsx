@@ -15,7 +15,7 @@ export default function Overview({ profile }) {
         const [products, batches, sales, alerts, units] = await Promise.all([
           unwrap(supabase.from('products').select('id,name,cost_price,reorder_level,archived')),
           unwrap(supabase.from('batches').select('id,product_id,qty_remaining,expiry')),
-          unwrap(supabase.from('sales').select('id,total,created_at').order('created_at', { ascending: false }).limit(100)),
+          unwrap(supabase.from('sales').select('id,total,created_at').is('voided_at', null).order('created_at', { ascending: false }).limit(100)),
           unwrap(supabase.from('alerts').select('*').neq('status','resolved').order('created_at', { ascending: false })),
           unwrap(supabase.from('storage_units').select('id,name')),
         ])
